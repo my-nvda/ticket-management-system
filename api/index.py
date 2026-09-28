@@ -1,11 +1,7 @@
-import sys
-import os
+from flask import Flask
+app = Flask(__name__)
 
-# Add root folder to sys.path
-root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-
-from app import app as application
-
-app = application
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def home(path):
+    return "<h1>🎉 Ticket System Serverless API Connected Successfully!</h1><p>Vercel is working cleanly.</p>"

@@ -22,11 +22,26 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Ensure upload directory exists safely
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+except Exception as e:
+    logger.warning(f"Could not create upload directory: {e}")
 
-# Initialize Database
-init_db(app)
+# Initialize Database safely
+db.init_app(app)
+
+_db_initialized = False
+
+@app.before_request
+def setup_database_once():
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            db.create_all()
+            _db_initialized = True
+        except Exception as e:
+            logger.error(f"Error creating DB tables: {e}")
 
 def allowed_file(filename):
     """Check if file extension is allowed."""

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Login | Ticket System{% endblock %}
+
+{% block content %}
+<section class="login-section">
+    <div class="card login-card">
+        <header class="card-header text-center">
+            <div class="lock-icon" aria-hidden="true">🔐</div>
+            <h1 class="page-title" data-en="Admin Portal Login" data-ar="تسجيل دخول المدير">Admin Portal Login</h1>
+            <p class="subtitle" data-en="Enter password to access management dashboard." data-ar="أدخل كلمة المرور للوصول إلى لوحة الإدارة.">
+                Enter password to access management dashboard.
+            </p>
+        </header>
+
+        <form action="{{ url_for('admin_login') }}" method="POST" id="login-form">
+            <div class="form-group">
+                <label for="password" class="form-label" data-en="Admin Password *" data-ar="كلمة مرور المدير *">
+                    Admin Password <span class="required-asterisk" aria-hidden="true">*</span>
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-control" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="password-help"
+                    autocomplete="current-password"
+                    placeholder="Enter password...">
+                <small id="password-help" class="form-hint" data-en="System administrator authorization required." data-ar="مطلوب تصريح مدير النظام.">
+                    System administrator authorization required.
+                </small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" data-en="Login to Dashboard" data-ar="تسجيل الدخول">
+                    Unlock Dashboard
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

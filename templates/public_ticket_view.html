@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if ticket %}Ticket {{ ticket.reference_number }}{% else %}Track Ticket Status{% endif %} | Ticket System{% endblock %}
+
+{% block content %}
+<section class="track-section">
+    <!-- Lookup Form Header -->
+    <div class="card search-card text-center" style="max-width: 650px; margin: 1rem auto 2rem auto;">
+        <h1 class="page-title" data-en="Track Ticket Status" data-ar="متابعة حالة التذكرة">Track Ticket Status</h1>
+        <p class="subtitle" data-en="Enter your ticket reference number (e.g. TKT-ROQGYHZN) to view status and support response." data-ar="أدخل الرقم المرجعي للتذكرة لمتابعة حالتها ومراجعة ردود فريق الدعم.">
+            Enter your ticket reference number to view status and support response.
+        </p>
+
+        <form action="{{ url_for('track_ticket_post') }}" method="POST" class="lookup-form" style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+            <input 
+                type="text" 
+                name="ref" 
+                class="form-control" 
+                placeholder="e.g. TKT-ROQGYHZN" 
+                value="{{ ticket.reference_number if ticket else (searched_ref or '') }}" 
+                required 
+                aria-label="Ticket reference number"
+                data-en-aria="Ticket reference number"
+                data-ar-aria="الرقم المرجعي للتذكرة">
+            <button type="submit" class="btn btn-primary" data-en="🔍 Track" data-ar="🔍 بحث">
+                🔍 Track
+            </button>
+        </form>
+    </div>
+
+    {% if ticket %}
+    <!-- Ticket Details Card -->
+    <div class="card ticket-status-card" style="max-width: 850px; margin: 0 auto;">
+        <header class="detail-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="ref-tag">{{ ticket.reference_number }}</span>
+                <h2 style="font-size: 1.5rem; margin-top: 0.25rem;" data-en="Ticket Summary" data-ar="ملخص التذكرة">Ticket Summary</h2>
+            </div>
+            <div>
+                <span class="status-badge status-{{ ticket.status }} status-badge-lg">
+                    {{ ticket.status|replace('_', ' ')|title }}
+                </span>
+            </div>
+        </header>
+
+        <hr class="divider">
+
+        <!-- Submitter Metadata -->
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label" data-en="Submitter Name:" data-ar="اسم المُرسل:">Submitter Name:</span>
+                <span class="info-value">{{ ticket.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" data-en="Email Address:" data-ar="البريد الإلكتروني:">Email Address:</span>
+                <span class="info-value">{{ ticket.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" data-en="Submitted On:" data-ar="تاريخ الإرسال:">Submitted On:</span>
+                <span class="info-value">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label" data-en="Last Updated:" data-ar="آخر تحديث:">Last Updated:</span>
+                <span class="info-value">{{ ticket.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Original Ticket Issue Description -->
+        <div class="description-section">
+            <h3 class="section-subtitle" style="font-size: 1.1rem; margin-bottom: 0.75rem;" data-en="Your Issue Description" data-ar="وصف المشكلة / الطلب">Your Issue Description</h3>
+            <div class="description-body">
+                {{ ticket.description }}
+            </div>
+
+            {% if ticket.attachment_filename %}
+            <div class="attachment-card" style="margin-top: 1rem;">
+                <div class="attachment-meta">
+                    <span class="attachment-icon" aria-hidden="true">📎</span>
+                    <span class="attachment-name">{{ ticket.attachment_filename }}</span>
+                </div>
+                <div class="attachment-actions">
+                    <a href="{{ url_for('uploaded_file', filename=ticket.attachment_filename) }}" target="_blank" class="btn btn-sm btn-outline" data-en="View Attachment" data-ar="عرض المرفق">
+                        👁️ View Attachment
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <hr class="divider">
+
+        <!-- ADMIN RESPONSE SECTION (رد الدعم والإدارة) -->
+        <div class="admin-reply-section" style="background: rgba(99, 102, 241, 0.08); border: 1px solid var(--primary); padding: 1.5rem; border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span style="font-size: 1.4rem;">💬</span>
+                <h3 style="font-size: 1.2rem; color: #a5b4fc;" data-en="Support Team Response" data-ar="رد فريق الدعم والإدارة">Support Team Response</h3>
+            </div>
+
+            {% if ticket.admin_reply %}
+                <div class="admin-reply-body" style="background: rgba(15, 23, 42, 0.6); padding: 1.25rem; border-radius: var(--radius-sm); white-space: pre-wrap; color: var(--text-main); line-height: 1.7; border-inline-start: 4px solid var(--primary);">
+                    {{ ticket.admin_reply }}
+                </div>
+                <small style="display: block; margin-top: 0.75rem; color: var(--text-muted); font-size: 0.825rem;" data-en="Replied on {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}" data-ar="تم الرد بتاريخ {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}">
+                    Replied on {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                </small>
+            {% else %}
+                <div class="reply-pending" style="color: var(--text-muted); font-style: italic; padding: 0.5rem 0;">
+                    <span data-en="⏳ Your ticket is currently under review by our support team. The admin response will be published here once updated." data-ar="⏳ تذكرتك قيد المراجعة حالياً من قِبل فريق الدعم. سيتم توثيق ونشر رد الإدارة هنا فور التحديث.">
+                        ⏳ Your ticket is currently under review by our support team. The admin response will be published here once updated.
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

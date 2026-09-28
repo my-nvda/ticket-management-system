@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit a New Ticket | Ticket System{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="card form-card">
+        <header class="card-header">
+            <h1 class="page-title" data-en="Submit a New Ticket" data-ar="تقديم تذكرة جديدة">Submit a New Ticket</h1>
+            <p class="subtitle" data-en="Please provide details of your issue or request. Our team will review it shortly." data-ar="يرجى توضيح تفاصيل مشكلتك أو طلبك. سيراجع فريقنا التذكرة في أقرب وقت.">
+                Please provide details of your issue or request. Our team will review it shortly.
+            </p>
+        </header>
+
+        <form action="{{ url_for('submit_ticket') }}" method="POST" enctype="multipart/form-data" id="ticket-form" novalidate>
+            <!-- Full Name Input -->
+            <div class="form-group">
+                <label for="name" class="form-label" data-en="Full Name *" data-ar="الاسم بالكامل *">
+                    Full Name <span class="required-asterisk" aria-hidden="true">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    class="form-control" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="name-help name-error"
+                    placeholder="e.g. Sarah Connor"
+                    autocomplete="name">
+                <small id="name-help" class="form-hint" data-en="Enter your full name." data-ar="أدخل الاسم بالكامل.">
+                    Enter your full name.
+                </small>
+                <span id="name-error" class="error-text sr-only" role="alert"></span>
+            </div>
+
+            <!-- Email Input -->
+            <div class="form-group">
+                <label for="email" class="form-label" data-en="Email Address *" data-ar="البريد الإلكتروني *">
+                    Email Address <span class="required-asterisk" aria-hidden="true">*</span>
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-control" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="email-help email-error"
+                    placeholder="e.g. name@company.com"
+                    autocomplete="email">
+                <small id="email-help" class="form-hint" data-en="We'll send ticket updates to this email." data-ar="سنرسل تحديثات التذكرة إلى هذا البريد.">
+                    We'll send ticket updates to this email.
+                </small>
+                <span id="email-error" class="error-text sr-only" role="alert"></span>
+            </div>
+
+            <!-- WhatsApp Mobile Phone Input -->
+            <div class="form-group">
+                <label for="phone" class="form-label" data-en="WhatsApp Mobile Number *" data-ar="رقم الواتساب للاستلام والإشعارات *">
+                    WhatsApp Mobile Number <span class="required-asterisk" aria-hidden="true">*</span>
+                </label>
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    class="form-control" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="phone-help phone-error"
+                    placeholder="e.g. 01012345678 or +201012345678"
+                    autocomplete="tel">
+                <small id="phone-help" class="form-hint" data-en="We'll send instant automated WhatsApp updates and tracking links to this number." data-ar="سنرسل إشعارات الواتساب الفورية ورابط التتبع التلقائي لهذا الرقم.">
+                    We'll send instant automated WhatsApp updates and tracking links to this number.
+                </small>
+                <span id="phone-error" class="error-text sr-only" role="alert"></span>
+            </div>
+
+            <!-- Issue Description Textarea -->
+            <div class="form-group">
+                <label for="description" class="form-label" data-en="Description of Request / Issue *" data-ar="وصف المشكلة أو الطلب *">
+                    Description of Request / Issue <span class="required-asterisk" aria-hidden="true">*</span>
+                </label>
+                <textarea 
+                    id="description" 
+                    name="description" 
+                    class="form-control textarea-control" 
+                    rows="5" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="description-help description-error"
+                    placeholder="Describe what happened or details of your request..."></textarea>
+                <small id="description-help" class="form-hint" data-en="Provide necessary details to help us assist you quickly." data-ar="أدخل التفاصيل اللازمة لمساعدتك في أسرع وقت.">
+                    Provide necessary details to help us assist you quickly.
+                </small>
+                <span id="description-error" class="error-text sr-only" role="alert"></span>
+            </div>
+
+            <!-- Attachment Input -->
+            <div class="form-group">
+                <label for="attachment" class="form-label" data-en="Attachment (Optional)" data-ar="المرفقات (اختياري)">
+                    Attachment (Optional)
+                </label>
+                <input 
+                    type="file" 
+                    id="attachment" 
+                    name="attachment" 
+                    class="form-file-control" 
+                    accept="image/*,.pdf,.txt"
+                    aria-describedby="attachment-help">
+                <small id="attachment-help" class="form-hint" data-en="Upload a screenshot or document (PNG, JPG, PDF up to 16MB)." data-ar="ارفع لقطة شاشة أو مستند (PNG, JPG, PDF حتى 16 ميجابايت).">
+                    Upload a screenshot or document (PNG, JPG, PDF up to 16MB).
+                </small>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="submit-btn" data-en="Submit Ticket" data-ar="إرسال التذكرة">
+                    <span class="btn-icon" aria-hidden="true">🚀</span>
+                    <span class="btn-text">Submit Ticket</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Ticket System{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title" data-en="Management Dashboard" data-ar="لوحة التحكم والإدارة">Management Dashboard</h1>
+            <p class="subtitle" data-en="Review, monitor, and update ticket statuses in real-time." data-ar="مراجعة ومراقبة وتحديث حالات التذاكر في الوقت الفعلي.">
+                Review, monitor, and update ticket statuses in real-time.
+            </p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('new_ticket') }}" class="btn btn-primary" data-en="➕ Create Ticket" data-ar="➕ إنشاء تذكرة">➕ Create Ticket</a>
+        </div>
+    </div>
+
+    <!-- Overview Metrics Cards -->
+    <div class="metrics-grid" role="region" aria-label="Ticket Metrics Summary" data-en-aria="Ticket Metrics Summary" data-ar-aria="ملخص إحصائيات التذاكر">
+        <a href="{{ url_for('dashboard', status='all') }}" class="metric-card {% if current_filter == 'all' %}active{% endif %}">
+            <span class="metric-value">{{ stats.total }}</span>
+            <span class="metric-label" data-en="Total Tickets" data-ar="إجمالي التذاكر">Total Tickets</span>
+        </a>
+        <a href="{{ url_for('dashboard', status='open') }}" class="metric-card metric-open {% if current_filter == 'open' %}active{% endif %}">
+            <span class="metric-value">{{ stats.open }}</span>
+            <span class="metric-label" data-en="Open" data-ar="مفتوحة">Open</span>
+        </a>
+        <a href="{{ url_for('dashboard', status='in_progress') }}" class="metric-card metric-progress {% if current_filter == 'in_progress' %}active{% endif %}">
+            <span class="metric-value">{{ stats.in_progress }}</span>
+            <span class="metric-label" data-en="In Progress" data-ar="قيد المعالجة">In Progress</span>
+        </a>
+        <a href="{{ url_for('dashboard', status='resolved') }}" class="metric-card metric-resolved {% if current_filter == 'resolved' %}active{% endif %}">
+            <span class="metric-value">{{ stats.resolved }}</span>
+            <span class="metric-label" data-en="Resolved" data-ar="تم الحل">Resolved</span>
+        </a>
+        <a href="{{ url_for('dashboard', status='closed') }}" class="metric-card metric-closed {% if current_filter == 'closed' %}active{% endif %}">
+            <span class="metric-value">{{ stats.closed }}</span>
+            <span class="metric-label" data-en="Closed" data-ar="مغلقة">Closed</span>
+        </a>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="table-toolbar card">
+        <form method="GET" action="{{ url_for('dashboard') }}" class="filter-form">
+            <label for="status-filter" class="filter-label" data-en="Filter by Status:" data-ar="تصفية حسب الحالة:">Filter by Status:</label>
+            <select name="status" id="status-filter" class="form-control form-control-sm" onchange="this.form.submit()">
+                <option value="all" {% if current_filter == 'all' %}selected{% endif %} data-en="All Statuses" data-ar="جميع الحالات">All Statuses</option>
+                <option value="open" {% if current_filter == 'open' %}selected{% endif %} data-en="Open" data-ar="مفتوحة">Open</option>
+                <option value="in_progress" {% if current_filter == 'in_progress' %}selected{% endif %} data-en="In Progress" data-ar="قيد المعالجة">In Progress</option>
+                <option value="resolved" {% if current_filter == 'resolved' %}selected{% endif %} data-en="Resolved" data-ar="تم الحل">Resolved</option>
+                <option value="closed" {% if current_filter == 'closed' %}selected{% endif %} data-en="Closed" data-ar="مغلقة">Closed</option>
+            </select>
+        </form>
+        <span class="results-count" data-en="Showing {{ tickets|length }} tickets" data-ar="عرض {{ tickets|length }} تذكرة">
+            Showing {{ tickets|length }} tickets
+        </span>
+    </div>
+
+    <!-- Accessible Tickets Table -->
+    <div class="table-responsive card" role="region" aria-label="Tickets Table" data-en-aria="Tickets Table" data-ar-aria="جدول التذاكر" tabindex="0">
+        {% if tickets %}
+        <table class="tickets-table" role="table">
+            <caption class="sr-only" data-en="List of employee tickets with details, status, and action links" data-ar="قائمة تذاكر الموظفين بالتفاصيل والحالة وروابط الإجراءات">List of employee tickets with details, status, and action links</caption>
+            <thead>
+                <tr role="row">
+                    <th scope="col" data-en="Reference" data-ar="الرقم المرجعي">Reference</th>
+                    <th scope="col" data-en="Submitter Name" data-ar="اسم مقدم التذكرة">Submitter Name</th>
+                    <th scope="col" data-en="Email" data-ar="البريد الإلكتروني">Email</th>
+                    <th scope="col" data-en="Date Submitted" data-ar="تاريخ الإرسال">Date Submitted</th>
+                    <th scope="col" data-en="Current Status" data-ar="الحالة الحالية">Current Status</th>
+                    <th scope="col" data-en="Attachment" data-ar="المرفق">Attachment</th>
+                    <th scope="col" data-en="Actions" data-ar="الإجراءات">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr role="row" id="ticket-row-{{ ticket.id }}">
+                    <td class="cell-ref">
+                        <code>{{ ticket.reference_number }}</code>
+                    </td>
+                    <td class="cell-name">{{ ticket.name }}</td>
+                    <td class="cell-email">{{ ticket.email }}</td>
+                    <td class="cell-date">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="cell-status">
+                        <span class="status-badge status-{{ ticket.status }}" id="badge-{{ ticket.id }}">
+                            {{ ticket.status|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td class="cell-attachment">
+                        {% if ticket.attachment_filename %}
+                        <a href="{{ url_for('uploaded_file', filename=ticket.attachment_filename) }}" target="_blank" class="attachment-link" aria-label="View attachment for ticket {{ ticket.reference_number }}" data-en-aria="View attachment for ticket {{ ticket.reference_number }}" data-ar-aria="عرض المرفق للتذكرة {{ ticket.reference_number }}">
+                            📎 View
+                        </a>
+                        {% else %}
+                        <span class="text-muted" data-en="None" data-ar="لا يوجد">None</span>
+                        {% endif %}
+                    </td>
+                    <td class="cell-actions">
+                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline" aria-label="View details for ticket {{ ticket.reference_number }}" data-en-aria="View details for ticket {{ ticket.reference_number }}" data-ar-aria="عرض تفاصيل التذكرة {{ ticket.reference_number }}" data-en="Details" data-ar="التفاصيل">
+                            Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">📭</span>
+            <h2 data-en="No Tickets Found" data-ar="لا توجد تذاكر">No Tickets Found</h2>
+            <p data-en="There are currently no tickets matching your selection." data-ar="لا توجد تذاكر تطابق اختيارك حالياً.">
+                There are currently no tickets matching your selection.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

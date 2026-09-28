@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ticket-management-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_AUTH_ENABLED
+        value: "false"
+      - key: ADMIN_PASSWORD
+        value: "admin123"
+      - key: UPLOAD_FOLDER
+        value: "uploads"

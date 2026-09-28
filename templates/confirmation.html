@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket Submitted | Ticket System{% endblock %}
+
+{% block content %}
+<section class="confirmation-section">
+    <div class="card confirmation-card text-center" role="region" aria-label="Ticket Submission Result" data-en-aria="Ticket Submission Result" data-ar-aria="نتيجة إرسال التذكرة">
+        <div class="success-badge" aria-hidden="true">
+            <svg class="checkmark-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" width="64" height="64" aria-hidden="true">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+
+        <h1 class="page-title" data-en="Ticket Submitted Successfully!" data-ar="تم إرسال التذكرة بنجاح!">
+            Ticket Submitted Successfully!
+        </h1>
+        
+        <p class="confirmation-lead">
+            <span data-en="Thank you" data-ar="شكراً لك">Thank you</span> <strong>{{ ticket.name }}</strong>. <span data-en="We have received your ticket and our support team has been notified." data-ar="لقد استلمنا تذكرتك وتم إشعار فريق الدعم.">We have received your ticket and our support team has been notified.</span>
+        </p>
+
+        <!-- Reference Number Box (Accessible Live Region) -->
+        <div class="reference-box" role="status" aria-live="polite">
+            <span class="ref-label" data-en="Your Reference Number:" data-ar="رقمك المرجعي:">Your Reference Number:</span>
+            <div class="ref-number-display" id="ticket-ref" aria-label="Reference number {{ ticket.reference_number }}" data-en-aria="Reference number {{ ticket.reference_number }}" data-ar-aria="الرقم المرجعي {{ ticket.reference_number }}">
+                {{ ticket.reference_number }}
+            </div>
+            <p class="ref-hint" data-en="Please save this reference number for future communication." data-ar="يرجى حفظ هذا الرقم المرجعي للمتابعة المستقبليّة.">
+                Please save this reference number for future communication.
+            </p>
+            <button type="button" class="btn btn-outline btn-sm copy-btn" id="copy-ref-btn" data-ref="{{ ticket.reference_number }}" data-en="Copy Reference" data-ar="نسخ الرقم المرجعي" aria-label="Copy reference number {{ ticket.reference_number }}" data-en-aria="Copy reference number {{ ticket.reference_number }}" data-ar-aria="نسخ الرقم المرجعي {{ ticket.reference_number }}">
+                📋 Copy Reference
+            </button>
+        </div>
+
+        <!-- Ticket Overview -->
+        <div class="ticket-summary-box">
+            <h2 class="summary-title" data-en="Submitted Information" data-ar="المعلومات المُرسلة">Submitted Information</h2>
+            <dl class="summary-list">
+                <dt data-en="Email:" data-ar="البريد الإلكتروني:">Email:</dt>
+                <dd>{{ ticket.email }}</dd>
+                
+                <dt data-en="Submitted Date:" data-ar="تاريخ الإرسال:">Submitted Date:</dt>
+                <dd>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</dd>
+                
+                <dt data-en="Status:" data-ar="الحالة:">Status:</dt>
+                <dd><span class="status-badge status-{{ ticket.status }}">{{ ticket.status|replace('_', ' ')|title }}</span></dd>
+                
+                {% if ticket.attachment_filename %}
+                <dt data-en="Attachment:" data-ar="المرفق:">Attachment:</dt>
+                <dd>📎 {{ ticket.attachment_filename }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+
+        <!-- Action Links -->
+        <div class="confirmation-actions" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('track_ticket_view', ref=ticket.reference_number) }}" class="btn btn-primary btn-lg" data-en="🔍 Track Ticket Status" data-ar="🔍 متابعة حالة التذكرة">
+                🔍 Track Ticket Status
+            </a>
+            <a href="{{ url_for('new_ticket') }}" class="btn btn-outline btn-lg" data-en="➕ Submit Another Ticket" data-ar="➕ إرسال تذكرة أخرى">
+                ➕ Submit Another Ticket
+            </a>
+            {% if is_admin %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg" data-en="Go to Dashboard" data-ar="الذهاب للوحة التحكم">
+                📊 Go to Dashboard
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

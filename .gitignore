@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+
+# Database & Environment
+tickets.db
+.env
+
+# Node Gateway & Auth Sessions
+gateway/node_modules/
+gateway/auth_info_baileys/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

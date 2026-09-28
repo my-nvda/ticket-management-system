@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket {{ ticket.reference_number }} | Ticket System{% endblock %}
+
+{% block content %}
+<section class="detail-section">
+    <!-- Breadcrumb / Back button -->
+    <div class="detail-nav">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm" data-en="← Back to Dashboard" data-ar="← العودة للوحة التحكم">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="detail-grid">
+        <!-- Main Content Card -->
+        <article class="card detail-card">
+            <header class="detail-header">
+                <div class="detail-title-group">
+                    <span class="ref-tag">{{ ticket.reference_number }}</span>
+                    <h1 class="page-title" data-en="Ticket Details" data-ar="تفاصيل التذكرة">Ticket Details</h1>
+                </div>
+                <div class="status-container">
+                    <span class="status-badge status-{{ ticket.status }} status-badge-lg" id="detail-status-badge">
+                        {{ ticket.status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+            </header>
+
+            <hr class="divider">
+
+            <!-- Submitter Information -->
+            <section class="info-section">
+                <h2 class="section-subtitle" data-en="Submitter Info" data-ar="معلومات المُرسل">Submitter Info</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label" data-en="Full Name:" data-ar="الاسم الكامل:">Full Name:</span>
+                        <span class="info-value">{{ ticket.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" data-en="Company Email:" data-ar="البريد الإلكتروني:">Company Email:</span>
+                        <a href="mailto:{{ ticket.email }}" class="info-value email-link">{{ ticket.email }}</a>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" data-en="Created Date:" data-ar="تاريخ الإنشاء:">Created Date:</span>
+                        <span class="info-value">{{ ticket.created_at.strftime('%B %d, %Y at %H:%M UTC') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" data-en="Last Updated:" data-ar="آخر تحديث:">Last Updated:</span>
+                        <span class="info-value">{{ ticket.updated_at.strftime('%B %d, %Y at %H:%M UTC') }}</span>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="divider">
+
+            <!-- Issue Description -->
+            <section class="description-section">
+                <h2 class="section-subtitle" data-en="Issue / Complaint Description" data-ar="وصف المشكلة / الشكوى">
+                    Issue / Complaint Description
+                </h2>
+                <div class="description-body">
+                    {{ ticket.description }}
+                </div>
+            </section>
+
+            <!-- Attachment Section -->
+            {% if ticket.attachment_filename %}
+            <hr class="divider">
+            <section class="attachment-section">
+                <h2 class="section-subtitle" data-en="Attached File" data-ar="الملف المرفق">Attached File</h2>
+                <div class="attachment-card">
+                    <div class="attachment-meta">
+                        <span class="attachment-icon" aria-hidden="true">📎</span>
+                        <span class="attachment-name">{{ ticket.attachment_filename }}</span>
+                    </div>
+                    <div class="attachment-actions">
+                        <a href="{{ url_for('uploaded_file', filename=ticket.attachment_filename) }}" target="_blank" class="btn btn-sm btn-primary" data-en="Preview / Download" data-ar="معاينة / تحميل">
+                            Preview / Download
+                        </a>
+                    </div>
+                </div>
+                <!-- Image Preview if Image -->
+                {% set ext = ticket.attachment_filename.rsplit('.', 1)[-1].lower() %}
+                {% if ext in ['png', 'jpg', 'jpeg', 'gif', 'webp'] %}
+                <div class="image-preview-container">
+                    <img src="{{ url_for('uploaded_file', filename=ticket.attachment_filename) }}" alt="Screenshot for ticket {{ ticket.reference_number }}" class="image-preview">
+                </div>
+                {% endif %}
+            </section>
+            {% endif %}
+        </article>
+
+        <!-- Sidebar Actions & Status Control Card -->
+        <aside class="sidebar-card-wrapper">
+            <div class="card status-control-card">
+                <h2 class="card-subtitle" data-en="Update Ticket State" data-ar="تحديث حالة التذكرة">Update Ticket State</h2>
+                <p class="hint-text" data-en="Select the new status to update this ticket." data-ar="اختر الحالة الجديدة لتحديث هذه التذكرة.">
+                    Select the new status to update this ticket.
+                </p>
+
+                <!-- Status Update Form with AJAX + Accessible ARIA Feedback -->
+                <form id="status-update-form" data-ticket-id="{{ ticket.id }}" action="{{ url_for('update_status', ticket_id=ticket.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="status-select" class="form-label" data-en="Select New Status" data-ar="اختر الحالة الجديدة">
+                            Select New Status
+                        </label>
+                        <select id="status-select" name="status" class="form-control" aria-describedby="status-change-hint">
+                            <option value="open" {% if ticket.status == 'open' %}selected{% endif %} data-en="Open" data-ar="مفتوحة">Open</option>
+                            <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %} data-en="In Progress" data-ar="قيد المعالجة">In Progress</option>
+                            <option value="resolved" {% if ticket.status == 'resolved' %}selected{% endif %} data-en="Resolved" data-ar="تم الحل">Resolved</option>
+                            <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %} data-en="Closed" data-ar="مغلقة">Closed</option>
+                        </select>
+                        <small id="status-change-hint" class="form-hint" data-en="Select the new state for this ticket." data-ar="اختر الحالة الجديدة لهذه التذكرة.">
+                            Select the new state for this ticket.
+                        </small>
+                    </div>
+
+                    <!-- Admin Response Input -->
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="admin-reply-textarea" class="form-label" data-en="Admin Response / Reply Notes" data-ar="رد الإدارة والدعم على التذكرة">
+                            Admin Response / Reply Notes
+                        </label>
+                        <textarea 
+                            id="admin-reply-textarea" 
+                            name="admin_reply" 
+                            class="form-control textarea-control" 
+                            rows="4" 
+                            placeholder="Write response or resolution details for the user...">{{ ticket.admin_reply or '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="update-status-btn" data-en="Save & Send Update" data-ar="حفظ وإرسال التحديث">
+                        Save & Send Update
+                    </button>
+                </form>
+
+                <!-- Status Change Live Feedback -->
+                <div id="status-feedback" class="status-feedback sr-only" role="status" aria-live="polite"></div>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

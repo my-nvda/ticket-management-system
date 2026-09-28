@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Production-ready lightweight accessible Ticket Management System">
+    <title>{% block title %}Ticket System{% endblock %}</title>
+    
+    <!-- Google Fonts: Inter (EN) & Noto Sans Arabic (AR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-link" data-en="Skip to main content" data-ar="تخطي إلى المحتوى الرئيسي">Skip to main content</a>
+
+    <!-- Screen Reader Live Announcer Region -->
+    <div id="live-announcer" class="sr-only" aria-live="polite" aria-atomic="true" role="status"></div>
+
+    <!-- Main Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-group">
+                <span class="logo-icon" aria-hidden="true">🎫</span>
+                <a href="{{ url_for('new_ticket') }}" class="app-title" data-en="Ticket System" data-ar="نظام التذاكر">Ticket System</a>
+            </div>
+
+            <!-- Navigation Bar -->
+            <nav class="main-nav" aria-label="Main Navigation" data-en-aria="Main Navigation" data-ar-aria="القائمة الرئيسية">
+                <ul class="nav-list">
+                    <li>
+                        <a href="{{ url_for('new_ticket') }}" class="nav-link" data-en="Submit Ticket" data-ar="تقديم تذكرة">Submit Ticket</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('track_ticket') }}" class="nav-link" data-en="Track Ticket" data-ar="متابعة تذكرة">Track Ticket</a>
+                    </li>
+                    {% if is_admin %}
+                    <li>
+                        <a href="{{ url_for('dashboard') }}" class="nav-link" data-en="Dashboard" data-ar="لوحة التحكم">Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin_logout') }}" class="nav-link nav-logout" data-en="Logout" data-ar="تسجيل الخروج">Logout</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <!-- Controls: Theme & Language Toggle -->
+            <div class="header-controls">
+                <button type="button" id="lang-toggle-btn" class="btn btn-outline btn-sm" aria-label="Switch Language to Arabic" data-en="العربية" data-ar="English">
+                    🌐 العربية
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Flash Messages (Accessible Alert Region) -->
+    <div class="container messages-container" aria-live="polite">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        <span class="alert-icon" aria-hidden="true">
+                            {% if category == 'error' %}⚠️{% elif category == 'success' %}✅{% else %}ℹ️{% endif %}
+                        </span>
+                        <span class="alert-text">{{ message }}</span>
+                        <button type="button" class="alert-close" aria-label="Close message" data-en-aria="Close message" data-ar-aria="إغلاق التنبيه" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Body -->
+    <main id="main-content" class="container main-container" tabindex="-1">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+        <div class="container footer-container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <p data-en="© 2026 Ticket Management System. All rights reserved." data-ar="© 2026 نظام إدارة التذاكر. جميع الحقوق محفوظة.">
+                © 2026 Ticket Management System. All rights reserved.
+            </p>
+            <div class="footer-admin-link">
+                {% if is_admin %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link" data-en="📊 Dashboard" data-ar="📊 لوحة التحكم">📊 Dashboard</a>
+                {% else %}
+                <a href="{{ url_for('admin_login') }}" class="nav-link" data-en="🔒 Admin Login" data-ar="🔒 دخول الإدارة" style="opacity: 0.7; font-size: 0.85rem;">🔒 Admin Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </footer>
+
+    <!-- Vanilla JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

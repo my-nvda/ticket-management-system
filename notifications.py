@@ -114,8 +114,13 @@ def send_whatsmeow_notification(ticket):
         "text": text_content
     }
     
+    headers = {
+        "ngrok-skip-browser-warning": "true",
+        "User-Agent": "TicketSystem/1.0"
+    }
+    
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
         if response.status_code in [200, 201]:
             logger.info("WhatsMeow admin notification sent successfully.")
             return True
@@ -154,8 +159,13 @@ def send_submitter_whatsmeow_confirmation(ticket):
         "text": text_content
     }
 
+    headers = {
+        "ngrok-skip-browser-warning": "true",
+        "User-Agent": "TicketSystem/1.0"
+    }
+
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
         if response.status_code in [200, 201]:
             logger.info(f"Submitter WhatsApp confirmation sent to {submitter_phone}.")
             return True
@@ -236,8 +246,13 @@ def send_status_update_notification(ticket):
         "text": update_text
     }
 
+    headers = {
+        "ngrok-skip-browser-warning": "true",
+        "User-Agent": "TicketSystem/1.0"
+    }
+
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
         return response.status_code in [200, 201]
     except Exception as e:
         logger.error(f"Failed to send status update notification: {e}")

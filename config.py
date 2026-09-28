@@ -50,7 +50,7 @@ class Config:
     WEBHOOK_URL = os.environ.get('WEBHOOK_URL', '')
 
     # WhatsMeow (Go QR Gateway) Settings
-    WHATSMEOW_ENABLED = os.environ.get('WHATSMEOW_ENABLED', 'false').lower() in ['true', '1', 'yes']
+    WHATSMEOW_ENABLED = os.environ.get('WHATSMEOW_ENABLED', 'true').lower() in ['true', '1', 'yes']
     WHATSMEOW_API_URL = os.environ.get('WHATSMEOW_API_URL', 'http://localhost:3000')
     WHATSMEOW_RECIPIENT_NUMBER = os.environ.get('WHATSMEOW_RECIPIENT_NUMBER', '')
 

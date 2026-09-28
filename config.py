@@ -11,10 +11,14 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default-dev-secret-key-change-in-prod')
     
     # Database Configuration (supports SQLite local & PostgreSQL remote)
-    # Fix standard postgres:// URI format if provided by Neon/Supabase/Heroku/Render
-    _db_url = os.environ.get('DATABASE_URL', 'sqlite:///tickets.db')
-    if _db_url.startswith("postgres://"):
-        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    IS_VERCEL = os.environ.get('VERCEL') is not None
+    if IS_VERCEL:
+        _db_url = 'sqlite:////tmp/tickets.db'
+    else:
+        _db_url = os.environ.get('DATABASE_URL', 'sqlite:///tickets.db')
+        if _db_url.startswith("postgres://"):
+            _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+            
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -24,7 +28,10 @@ class Config:
     
     # Upload Configuration
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, os.environ.get('UPLOAD_FOLDER', 'uploads'))
+    if IS_VERCEL:
+        UPLOAD_FOLDER = '/tmp/uploads'
+    else:
+        UPLOAD_FOLDER = os.path.join(BASE_DIR, os.environ.get('UPLOAD_FOLDER', 'uploads'))
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt'}
     

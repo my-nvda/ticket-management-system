@@ -6,5 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app import app
 
-# Export for Vercel Serverless Function
+# Export app & handler for Vercel WSGI / Serverless runtime
 app = app
+handler = app

@@ -281,6 +281,51 @@ def update_status(ticket_id):
     flash(message, 'success')
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
+@app.route('/test-whatsapp')
+def test_whatsapp_endpoint():
+    """Live diagnostic endpoint to verify WhatsApp integration and Railway env variables."""
+    import requests
+    from config import Config
+    
+    api_url = Config.WHATSMEOW_API_URL
+    recipient = Config.WHATSMEOW_RECIPIENT_NUMBER or '201000000000'
+    enabled = Config.WHATSMEOW_ENABLED
+    
+    diagnostic = {
+        'WHATSMEOW_ENABLED': enabled,
+        'WHATSMEOW_API_URL': api_url,
+        'WHATSMEOW_RECIPIENT_NUMBER': Config.WHATSMEOW_RECIPIENT_NUMBER,
+        'BASE_URL': os.environ.get('BASE_URL', 'http://localhost:5000')
+    }
+    
+    if not api_url or api_url == 'http://localhost:3000':
+        diagnostic['error'] = 'WHATSMEOW_API_URL is missing or using default localhost:3000 on Railway. Please set WHATSMEOW_API_URL in Railway Variables to your ngrok URL.'
+        return jsonify(diagnostic), 400
+        
+    target_url = f"{api_url.rstrip('/')}/send-message"
+    payload = {
+        "phone": recipient,
+        "receiver": recipient,
+        "to": recipient,
+        "message": "🧪 Test WhatsApp message from Railway diagnostic tool.",
+        "text": "🧪 Test WhatsApp message from Railway diagnostic tool."
+    }
+    headers = {
+        "ngrok-skip-browser-warning": "true",
+        "User-Agent": "TicketSystem/1.0"
+    }
+    
+    try:
+        res = requests.post(target_url, json=payload, headers=headers, timeout=10)
+        diagnostic['response_status'] = res.status_code
+        diagnostic['response_text'] = res.text
+        diagnostic['success'] = res.status_code in [200, 201]
+        return jsonify(diagnostic), (200 if diagnostic['success'] else 500)
+    except Exception as err:
+        diagnostic['exception'] = str(err)
+        diagnostic['success'] = False
+        return jsonify(diagnostic), 500
+
 # ==================== FILE SERVING ====================
 
 @app.route('/uploads/<filename>')

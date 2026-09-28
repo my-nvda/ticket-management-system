@@ -1,8 +1,11 @@
 import logging
+import os
 import requests
 from config import Config
 
 logger = logging.getLogger(__name__)
+
+BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5000').rstrip('/')
 
 def format_notification_text(ticket):
     """Format ticket notification content for admin alert."""
@@ -17,7 +20,7 @@ def format_notification_text(ticket):
         f"📝 *Issue:* {preview}\n"
         f"📎 *Attachment:* {'Yes' if ticket.attachment_filename else 'None'}\n"
         f"------------------------\n"
-        f"🔗 *Admin Link:* http://localhost:5000/admin/ticket/{ticket.id}"
+        f"🔗 *Admin Link:* {BASE_URL}/admin/ticket/{ticket.id}"
     )
 
 def send_whatsapp_notification(ticket):
@@ -132,7 +135,7 @@ def send_submitter_whatsmeow_confirmation(ticket):
     if not submitter_phone:
         return False
 
-    track_url = f"http://localhost:5000/track/{ticket.reference_number}"
+    track_url = f"{BASE_URL}/track/{ticket.reference_number}"
     text_content = (
         f"👋 *أهلاً {ticket.name}*\n"
         f"تم استلام تذكرتك بنجاح برقم مرجعي: `{ticket.reference_number}`\n\n"
@@ -211,7 +214,7 @@ def send_status_update_notification(ticket):
     }
 
     reply_preview = ticket.admin_reply if ticket.admin_reply else 'No reply text added.'
-    track_url = f"http://localhost:5000/track/{ticket.reference_number}"
+    track_url = f"{BASE_URL}/track/{ticket.reference_number}"
 
     update_text = (
         f"🔔 *تحديث على تذكرتك (Ticket Update)*\n"

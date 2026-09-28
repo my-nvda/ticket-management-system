@@ -13,6 +13,8 @@ let sock = null;
 let qrCodeData = null;
 let isConnected = false;
 
+const msgStore = new Map();
+
 async function connectToWhatsApp() {
     const authDir = path.join(__dirname, 'auth_info_baileys');
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
@@ -20,7 +22,13 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        getMessage: async (key) => {
+            if (key && key.id && msgStore.has(key.id)) {
+                return msgStore.get(key.id);
+            }
+            return { conversation: "Ticket Notification Message" };
+        }
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -75,7 +83,10 @@ app.post('/send-message', async (req, res) => {
             });
         }
 
-        const cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+        let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('01') && cleanPhone.length === 11) {
+            cleanPhone = '20' + cleanPhone.substring(1);
+        }
         
         let jid = `${cleanPhone}@s.whatsapp.net`;
         try {
@@ -87,7 +98,10 @@ app.post('/send-message', async (req, res) => {
             console.log('[WARN] onWhatsApp lookup fallback:', e.message);
         }
 
-        await sock.sendMessage(jid, { text: message });
+        const sentMsg = await sock.sendMessage(jid, { text: message });
+        if (sentMsg && sentMsg.key && sentMsg.key.id) {
+            msgStore.set(sentMsg.key.id, { conversation: message });
+        }
         console.log(`[SUCCESS] WhatsApp notification sent to ${cleanPhone} (JID: ${jid})`);
         return res.json({ success: true, message: 'Message sent successfully', jid: jid });
     } catch (err) {
@@ -95,6 +109,8 @@ app.post('/send-message', async (req, res) => {
         return res.status(500).json({ success: false, error: err.message });
     }
 });
+
+const fs = require('fs');
 
 // QR Code Web Page Endpoint (Server-side rendering to Base64 Image)
 app.get('/qr', async (req, res) => {
@@ -104,8 +120,12 @@ app.get('/qr', async (req, res) => {
             <html>
             <head><title>WhatsApp Gateway Connected</title></head>
             <body style="font-family: sans-serif; text-align: center; padding: 3rem; background: #0f172a; color: #f8fafc;">
-                <h1 style="color: #4ade80;">✅ WhatsApp is Connected!</h1>
-                <p>Gateway is active and listening on port ${PORT}. Ticket notifications will be sent automatically.</p>
+                <h1 style="color: #4ade80;">✅ الواتساب متصل بالفعل! (WhatsApp Connected)</h1>
+                <p style="font-size: 1.1rem; margin-top: 1rem;">الخدمة تعمل وتستمع حالياً على البورت ${PORT}. الإشعارات يتم إرسالها تلقائياً.</p>
+                <div style="margin-top: 2rem;">
+                    <p style="color: #94a3b8;">هل تريد إلغاء الاتصال ومسح كيو آر جديد (QR Code)؟</p>
+                    <a href="/reset" style="display: inline-block; background: #ef4444; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 0.5rem;">🔄 إعادة تعيين الـ QR Code / Reset Session</a>
+                </div>
             </body>
             </html>
         `);
@@ -117,8 +137,9 @@ app.get('/qr', async (req, res) => {
             <html>
             <head><title>Generating QR Code...</title><meta http-equiv="refresh" content="3"></head>
             <body style="font-family: sans-serif; text-align: center; padding: 3rem; background: #0f172a; color: #f8fafc;">
-                <h1>⏳ Generating QR Code...</h1>
-                <p>Please wait a moment while the gateway initializes. Page will refresh in 3 seconds.</p>
+                <h1>⏳ جارٍ تجهيز الـ QR Code...</h1>
+                <p>يرجى الانتظار ثوانٍ معدودة. سيتم تحديث الصفحة تلقائياً خلال 3 ثوانٍ.</p>
+                <p><a href="/reset" style="color: #cbd5e1; text-decoration: underline;">إعادة المحاولة مجدداً (Reset)</a></p>
             </body>
             </html>
         `);
@@ -134,17 +155,48 @@ app.get('/qr', async (req, res) => {
                 <meta http-equiv="refresh" content="15">
             </head>
             <body style="font-family: sans-serif; text-align: center; padding: 2rem; background: #0f172a; color: #f8fafc;">
-                <h1 style="margin-bottom: 0.5rem;">📱 Scan QR Code to Connect WhatsApp</h1>
-                <p style="color: #94a3b8;">Open WhatsApp on your phone ➔ Settings ➔ Linked Devices ➔ Link a Device</p>
+                <h1 style="margin-bottom: 0.5rem;">📱 امسح كود الـ QR لربط الواتساب</h1>
+                <p style="color: #94a3b8;">افتح الواتساب ➔ الإعدادات ➔ الأجهزة المرتبطة ➔ ربط جهاز</p>
                 <div style="background: white; display: inline-block; padding: 1.5rem; border-radius: 16px; margin: 1.5rem auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
                     <img src="${qrImageUrl}" alt="WhatsApp QR Code" style="display: block; width: 300px; height: 300px;">
                 </div>
-                <p style="font-size: 0.85rem; color: #64748b;">Page refreshes automatically every 15 seconds to fetch fresh QR tokens.</p>
+                <p style="font-size: 0.85rem; color: #64748b;">تتحدث الصفحة تلقائياً كل 15 ثانية لتحديث الكود.</p>
             </body>
             </html>
         `);
     } catch (err) {
         res.status(500).send("Error generating QR code image: " + err.message);
+    }
+});
+
+// Reset Session Endpoint
+app.get('/reset', async (req, res) => {
+    try {
+        if (sock && sock.ws) {
+            try { sock.ws.close(); } catch(e){}
+        }
+        sock = null;
+        isConnected = false;
+        qrCodeData = null;
+        const authDir = path.join(__dirname, 'auth_info_baileys');
+        if (fs.existsSync(authDir)) {
+            fs.rmSync(authDir, { recursive: true, force: true });
+        }
+        setTimeout(() => {
+            connectToWhatsApp();
+        }, 1000);
+        return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head><title>Resetting Session...</title><meta http-equiv="refresh" content="3;url=/qr"></head>
+            <body style="font-family: sans-serif; text-align: center; padding: 3rem; background: #0f172a; color: #f8fafc;">
+                <h1 style="color: #38bdf8;">🔄 تم إعادة تعيين الجلسة بنجاح!</h1>
+                <p>جارٍ إنشاء كيو آر (QR Code) جديد... سيتم توجيهك خلال 3 ثوانٍ.</p>
+            </body>
+            </html>
+        `);
+    } catch(err) {
+        return res.status(500).send("Error resetting session: " + err.message);
     }
 });
 

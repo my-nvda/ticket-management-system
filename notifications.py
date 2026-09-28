@@ -7,6 +7,15 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5000').rstrip('/')
 
+def clean_phone_number(phone_raw):
+    """Normalize phone number to international format without +."""
+    if not phone_raw:
+        return ""
+    clean = str(phone_raw).replace('+', '').replace(' ', '').replace('-', '').strip()
+    if clean.startswith('01') and len(clean) == 11:
+        clean = '20' + clean[1:]
+    return clean
+
 def format_notification_text(ticket):
     """Format ticket notification content for admin alert."""
     preview = ticket.description[:180] + '...' if len(ticket.description) > 180 else ticket.description
@@ -102,7 +111,7 @@ def send_whatsmeow_notification(ticket):
     if not (Config.WHATSMEOW_ENABLED and Config.WHATSMEOW_API_URL and Config.WHATSMEOW_RECIPIENT_NUMBER):
         return False
     
-    recipient = Config.WHATSMEOW_RECIPIENT_NUMBER.replace('+', '').replace(' ', '').replace('-', '')
+    recipient = clean_phone_number(Config.WHATSMEOW_RECIPIENT_NUMBER)
     text_content = format_notification_text(ticket)
     
     url = f"{Config.WHATSMEOW_API_URL.rstrip('/')}/send-message"
@@ -136,7 +145,7 @@ def send_submitter_whatsmeow_confirmation(ticket):
     if not (Config.WHATSMEOW_ENABLED and Config.WHATSMEOW_API_URL and ticket.phone):
         return False
 
-    submitter_phone = ticket.phone.replace('+', '').replace(' ', '').replace('-', '').strip()
+    submitter_phone = clean_phone_number(ticket.phone)
     if not submitter_phone:
         return False
 
@@ -210,11 +219,11 @@ def send_status_update_notification(ticket):
     if not (Config.WHATSMEOW_ENABLED and Config.WHATSMEOW_API_URL):
         return False
 
-    recipient = ticket.phone if ticket.phone else Config.WHATSMEOW_RECIPIENT_NUMBER
-    if not recipient:
+    raw_recipient = ticket.phone if ticket.phone else Config.WHATSMEOW_RECIPIENT_NUMBER
+    if not raw_recipient:
         return False
 
-    recipient = recipient.replace('+', '').replace(' ', '').replace('-', '').strip()
+    recipient = clean_phone_number(raw_recipient)
 
     status_labels = {
         'open': 'Open / مفتوحة',

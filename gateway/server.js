@@ -8,6 +8,14 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
+// Process-level crash prevention safeguards
+process.on('uncaughtException', (err) => {
+    console.log('[SAFEGUARD] Suppressed uncaught exception:', err.message || err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.log('[SAFEGUARD] Suppressed unhandled rejection:', reason ? (reason.message || reason) : 'Unknown reason');
+});
+
 const PORT = 3000;
 let sock = null;
 let qrCodeData = null;

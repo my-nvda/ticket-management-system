@@ -19,6 +19,11 @@ def clean_phone_number(phone_raw):
 def format_notification_text(ticket):
     """Format ticket notification content for admin alert."""
     preview = ticket.description[:180] + '...' if len(ticket.description) > 180 else ticket.description
+    if ticket.attachment_filename:
+        attachment_str = f"{BASE_URL}/uploads/{ticket.attachment_filename}"
+    else:
+        attachment_str = "No attachment / لا يوجد"
+        
     return (
         f"🎫 *New Ticket Submitted! / تذكرة جديدة*\n"
         f"------------------------\n"
@@ -27,7 +32,7 @@ def format_notification_text(ticket):
         f"📞 *Phone:* {ticket.phone or 'N/A'}\n"
         f"✉️ *Email:* {ticket.email}\n"
         f"📝 *Issue:* {preview}\n"
-        f"📎 *Attachment:* {'Yes' if ticket.attachment_filename else 'None'}\n"
+        f"📎 *Attachment / رابط المرفق:* \n{attachment_str}\n"
         f"------------------------\n"
         f"🔗 *Admin Link:* {BASE_URL}/admin/ticket/{ticket.id}"
     )
@@ -266,3 +271,28 @@ def send_status_update_notification(ticket):
     except Exception as e:
         logger.error(f"Failed to send status update notification: {e}")
         return False
+
+def retry_pending_whatsapp_notifications():
+    """
+    Scans for tickets with unsent WhatsApp notifications and retries sending them.
+    Called when WhatsApp gateway recovers or periodically.
+    """
+    if not (Config.WHATSMEOW_ENABLED and Config.WHATSMEOW_API_URL):
+        return 0
+
+    from models import Ticket, db
+    try:
+        pending_tickets = Ticket.query.filter_by(whatsapp_sent=False).order_by(Ticket.id.desc()).limit(20).all()
+        sent_count = 0
+        for ticket in pending_tickets:
+            res = send_ticket_notifications(ticket)
+            if res.get('whatsmeow_submitter') or res.get('whatsmeow_admin'):
+                ticket.whatsapp_sent = True
+                sent_count += 1
+        if sent_count > 0:
+            db.session.commit()
+            logger.info(f"Retried and sent {sent_count} pending WhatsApp notifications.")
+        return sent_count
+    except Exception as e:
+        logger.error(f"Error retrying pending notifications: {e}")
+        return 0

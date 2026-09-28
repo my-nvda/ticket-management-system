@@ -162,7 +162,10 @@ def submit_ticket():
 
     # Dispatch notification (non-blocking errors)
     try:
-        send_ticket_notifications(ticket)
+        res = send_ticket_notifications(ticket)
+        if res and (res.get('whatsmeow_submitter') or res.get('whatsmeow_admin')):
+            ticket.whatsapp_sent = True
+            db.session.commit()
     except Exception as e:
         logger.error(f"Notification error: {e}")
 
@@ -183,6 +186,12 @@ def dashboard():
     if not is_admin_authenticated():
         return redirect(url_for('admin_login'))
         
+    try:
+        from notifications import retry_pending_whatsapp_notifications
+        retry_pending_whatsapp_notifications()
+    except Exception:
+        pass
+
     status_filter = request.args.get('status', 'all')
     
     query = Ticket.query
@@ -279,6 +288,55 @@ def update_status(ticket_id):
         })
         
     flash(message, 'success')
+    return redirect(url_for('ticket_detail', ticket_id=ticket_id))
+
+@app.route('/admin/ticket/<int:ticket_id>/delete', methods=['POST'])
+def delete_ticket(ticket_id):
+    """Delete ticket record and associated attachment file."""
+    if not is_admin_authenticated():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    ticket = Ticket.query.get_or_404(ticket_id)
+    ref_num = ticket.reference_number
+    
+    # Remove physical file if exists
+    if ticket.attachment_filename:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], ticket.attachment_filename)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error removing attachment file: {e}")
+
+    db.session.delete(ticket)
+    db.session.commit()
+    logger.info(f"Deleted ticket {ref_num}")
+    
+    flash(f"Ticket {ref_num} deleted successfully.", 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/ticket/<int:ticket_id>/delete-attachment', methods=['POST'])
+def delete_attachment(ticket_id):
+    """Delete attachment file of a ticket without deleting the ticket."""
+    if not is_admin_authenticated():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    if ticket.attachment_filename:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], ticket.attachment_filename)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error removing attachment file: {e}")
+        ticket.attachment_filename = None
+        db.session.commit()
+        logger.info(f"Deleted attachment for ticket {ticket.reference_number}")
+        flash("Attachment deleted successfully.", 'success')
+    else:
+        flash("No attachment found for this ticket.", 'info')
+
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
 @app.route('/test-whatsapp')

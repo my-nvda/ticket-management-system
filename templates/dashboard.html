@@ -97,10 +97,15 @@
                         <span class="text-muted" data-en="None" data-ar="لا يوجد">None</span>
                         {% endif %}
                     </td>
-                    <td class="cell-actions">
-                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline" aria-label="View details for ticket {{ ticket.reference_number }}" data-en-aria="View details for ticket {{ ticket.reference_number }}" data-ar-aria="عرض تفاصيل التذكرة {{ ticket.reference_number }}" data-en="Details" data-ar="التفاصيل">
+                    <td class="cell-actions" style="white-space: nowrap;">
+                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline" data-en="Details" data-ar="التفاصيل">
                             Details
                         </a>
+                        <form action="{{ url_for('delete_ticket', ticket_id=ticket.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('هل أنت متاكد من رغبتك في حذف هذه التذكرة؟ / Delete ticket {{ ticket.reference_number }}?');">
+                            <button type="submit" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" data-en="Delete" data-ar="حذف" title="Delete Ticket">
+                                🗑️
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

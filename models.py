@@ -24,6 +24,7 @@ class Ticket(db.Model):
     attachment_filename = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='open', index=True)
     admin_reply = db.Column(db.Text, nullable=True)
+    whatsapp_sent = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     

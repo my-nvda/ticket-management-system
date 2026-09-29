@@ -5,21 +5,59 @@ const QRCode = require('qrcode');
 const pino = require('pino');
 const path = require('path');
 
+const fs = require('fs');
+
 const app = express();
 app.use(express.json());
-
-// Process-level crash prevention safeguards
-process.on('uncaughtException', (err) => {
-    console.log('[SAFEGUARD] Suppressed uncaught exception:', err.message || err);
-});
-process.on('unhandledRejection', (reason) => {
-    console.log('[SAFEGUARD] Suppressed unhandled rejection:', reason ? (reason.message || reason) : 'Unknown reason');
-});
 
 const PORT = 3000;
 let sock = null;
 let qrCodeData = null;
 let isConnected = false;
+let isResetting = false;
+
+function resetCorruptedSession() {
+    if (isResetting) return;
+    isResetting = true;
+    try {
+        console.log('[AUTO-RECOVERY] Resetting corrupted Baileys Signal session keys...');
+        if (sock && sock.ws) {
+            try { sock.ws.close(); } catch(e){}
+        }
+        sock = null;
+        isConnected = false;
+        qrCodeData = null;
+        const authDir = path.join(__dirname, 'auth_info_baileys');
+        if (fs.existsSync(authDir)) {
+            fs.rmSync(authDir, { recursive: true, force: true });
+            console.log('[AUTO-RECOVERY] Purged corrupted auth_info_baileys directory.');
+        }
+        setTimeout(() => {
+            isResetting = false;
+            connectToWhatsApp();
+        }, 2000);
+    } catch(e) {
+        console.log('[AUTO-RECOVERY ERROR]:', e.message);
+        isResetting = false;
+    }
+}
+
+// Process-level crash prevention & auto-recovery safeguards
+process.on('uncaughtException', (err) => {
+    const msg = err ? (err.message || String(err)) : '';
+    console.log('[SAFEGUARD] Suppressed uncaught exception:', msg);
+    if (msg.includes('Over 2000 messages into the future') || msg.includes('SessionError') || msg.includes('Failed to decrypt')) {
+        resetCorruptedSession();
+    }
+});
+
+process.on('unhandledRejection', (reason) => {
+    const msg = reason ? (reason.message || String(reason)) : '';
+    console.log('[SAFEGUARD] Suppressed unhandled rejection:', msg);
+    if (msg.includes('Over 2000 messages into the future') || msg.includes('SessionError') || msg.includes('Failed to decrypt')) {
+        resetCorruptedSession();
+    }
+});
 
 const msgStore = new Map();
 

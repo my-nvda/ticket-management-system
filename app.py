@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 import time
 import hashlib
+import hmac
 import secrets as _secrets
 
 from config import Config
@@ -56,6 +57,27 @@ try:
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 except Exception as e:
     logger.warning(f"Could not create upload directory: {e}")
+
+# Session security hardening
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('RENDER'):
+    app.config['SESSION_COOKIE_SECURE'] = True
+
+# Security response headers
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    return response
+
+# Warn about weak default password
+_admin_pw = app.config.get('ADMIN_PASSWORD', '')
+if _admin_pw in ('admin123', 'password', 'admin', '123456', ''):
+    logger.warning("⚠️  SECURITY WARNING: Admin password is weak or default. Set ADMIN_PASSWORD environment variable to a strong password!")
 
 # Initialize Database safely
 db.init_app(app)
@@ -161,7 +183,8 @@ def track_ticket_view(ref):
     """View ticket status and support team reply by reference number."""
     ticket = Ticket.query.filter_by(reference_number=ref.strip().upper()).first()
     if not ticket:
-        flash(f'Ticket with reference {ref} was not found.', 'error')
+        from markupsafe import escape
+        flash(f'Ticket with reference {escape(ref)} was not found.', 'error')
         return render_template('public_ticket_view.html', ticket=None, searched_ref=ref)
     return render_template('public_ticket_view.html', ticket=ticket)
 
@@ -292,7 +315,7 @@ def admin_login():
             return render_template('login.html'), 429
         
         password = request.form.get('password', '')
-        if password == app.config['ADMIN_PASSWORD']:
+        if hmac.compare_digest(password, app.config['ADMIN_PASSWORD']):
             session['admin_logged_in'] = True
             h = _hash_ip(client_ip)
             _login_attempts.pop(h, None)
@@ -394,7 +417,7 @@ def delete_ticket(ticket_id):
     logger.info(f"Deleted ticket {ref_num}")
     
     flash(f"Ticket {ref_num} deleted successfully.", 'success')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('dashboard'))
 
 @app.route('/admin/ticket/<int:ticket_id>/delete-attachment', methods=['POST'])
 def delete_attachment(ticket_id):
@@ -424,7 +447,10 @@ def delete_attachment(ticket_id):
 
 @app.route('/test-whatsapp')
 def test_whatsapp_endpoint():
-    """Live diagnostic endpoint to verify WhatsApp integration and Railway env variables."""
+    """Live diagnostic endpoint to verify WhatsApp integration (admin only)."""
+    if not is_admin_authenticated():
+        from flask import abort
+        abort(403)
     import requests
     from config import Config
     

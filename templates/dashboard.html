@@ -77,18 +77,19 @@
             <tbody>
                 {% for ticket in tickets %}
                 <tr role="row" id="ticket-row-{{ ticket.id }}">
-                    <td class="cell-ref">
+                    <td class="cell-ref" data-label="Reference">
                         <code>{{ ticket.reference_number }}</code>
                     </td>
-                    <td class="cell-name">{{ ticket.name }}</td>
-                    <td class="cell-email">{{ ticket.email }}</td>
-                    <td class="cell-date">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td class="cell-status">
+                    <td class="cell-name" data-label="Name">{{ ticket.name }}</td>
+                    <td class="cell-email" data-label="Email">{{ ticket.email }}</td>
+                    <td class="cell-date" data-label="Date">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+
+                    <td class="cell-status" data-label="Status">
                         <span class="status-badge status-{{ ticket.status }}" id="badge-{{ ticket.id }}">
                             {{ ticket.status|replace('_', ' ')|title }}
                         </span>
                     </td>
-                    <td class="cell-attachment">
+                    <td class="cell-attachment" data-label="Attachment">
                         {% if ticket.attachment_filename %}
                         <a href="{{ url_for('uploaded_file', filename=ticket.attachment_filename) }}" target="_blank" class="attachment-link" aria-label="View attachment for ticket {{ ticket.reference_number }}" data-en-aria="View attachment for ticket {{ ticket.reference_number }}" data-ar-aria="عرض المرفق للتذكرة {{ ticket.reference_number }}">
                             📎 View
@@ -97,11 +98,12 @@
                         <span class="text-muted" data-en="None" data-ar="لا يوجد">None</span>
                         {% endif %}
                     </td>
-                    <td class="cell-actions" style="white-space: nowrap;">
+                    <td class="cell-actions" data-label="Actions" style="white-space: nowrap;">
                         <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline" data-en="Details" data-ar="التفاصيل">
                             Details
                         </a>
                         <form action="{{ url_for('delete_ticket', ticket_id=ticket.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('هل أنت متاكد من رغبتك في حذف هذه التذكرة؟ / Delete ticket {{ ticket.reference_number }}?');">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <button type="submit" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" data-en="Delete" data-ar="حذف" title="Delete Ticket">
                                 🗑️
                             </button>

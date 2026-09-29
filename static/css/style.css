@@ -648,6 +648,252 @@ html[lang="ar"] .tickets-table {
     margin-top: auto;
 }
 
+/* ==========================================================================
+   MOBILE RESPONSIVE DESIGN (< 768px)
+   ========================================================================== */
+
+@media (max-width: 767px) {
+    /* --- Fluid Typography --- */
+    .page-title {
+        font-size: clamp(1.25rem, 4vw, 1.75rem);
+    }
+    
+    .subtitle {
+        font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+    }
+    
+    .ref-number-display {
+        font-size: clamp(1.5rem, 6vw, 2.25rem);
+    }
+
+    /* --- Touch Target Enforcement (44px minimum) --- */
+    .btn, .nav-link, .form-control, .form-file-control,
+    select, input[type="submit"], input[type="button"],
+    .alert-close, .metric-card {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .btn-sm {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* --- Container & Spacing --- */
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .main-container {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+    
+    .card {
+        padding: 1.25rem;
+        border-radius: var(--radius-sm);
+    }
+
+    /* --- Header Mobile Optimization --- */
+    .header-container {
+        height: 56px;
+        padding: 0 1rem;
+    }
+    
+    .app-title {
+        font-size: 1.1rem;
+    }
+    
+    .logo-icon {
+        font-size: 1.4rem;
+    }
+    
+    .main-nav .nav-list {
+        gap: 0.5rem;
+    }
+    
+    .nav-link {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    /* --- Form Mobile Layout --- */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-control, .form-file-control {
+        padding: 0.875rem 1rem;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+    
+    .btn-lg {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* --- Confirmation Card Mobile --- */
+    .confirmation-card {
+        margin: 1rem auto;
+        max-width: 100%;
+    }
+    
+    .reference-box {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .summary-list {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+
+    /* --- Dashboard Table to Card Transformation --- */
+    .table-responsive {
+        overflow-x: visible;
+    }
+    
+    .tickets-table {
+        border: 0;
+    }
+    
+    .tickets-table thead {
+        display: none;
+    }
+    
+    .tickets-table tbody tr {
+        display: block;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        margin-bottom: 0.75rem;
+        padding: 1rem;
+        transition: var(--transition);
+    }
+    
+    .tickets-table tbody tr:hover {
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
+    
+    .tickets-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+    }
+    
+    .tickets-table td:last-child {
+        border-bottom: 0;
+    }
+    
+    .tickets-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+        margin-inline-end: 1rem;
+    }
+
+    /* --- Metrics Grid Mobile --- */
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .metric-label {
+        font-size: 0.8rem;
+    }
+
+    /* --- Table Toolbar Mobile --- */
+    .table-toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        align-items: stretch;
+    }
+
+    /* --- Detail Grid Mobile --- */
+    .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    html[lang="ar"] .detail-header {
+        align-items: flex-end;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .description-body {
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* --- Attachment Card Mobile --- */
+    .attachment-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .image-preview {
+        max-height: 250px;
+    }
+
+    /* --- Footer Mobile --- */
+    .app-footer {
+        padding: 1rem 0;
+        font-size: 0.8rem;
+    }
+}
+
+/* --- Extra Small Screens (< 400px) --- */
+@media (max-width: 399px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-container {
+        height: 50px;
+    }
+    
+    .app-title {
+        font-size: 0.95rem;
+    }
+    
+    .page-title {
+        font-size: clamp(1.1rem, 5vw, 1.4rem);
+    }
+    
+    .ref-number-display {
+        font-size: clamp(1.2rem, 8vw, 1.8rem);
+    }
+}
+
 /* --- Reduced Motion Accessibility (WCAG 2.1 AA) --- */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

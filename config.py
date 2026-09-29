@@ -1,4 +1,5 @@
 import os
+import secrets
 from dotenv import load_dotenv
 
 # Load environment variables from .env file if present
@@ -8,7 +9,7 @@ class Config:
     """Application configuration loader."""
     
     # Secret Key for Flask sessions
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'default-dev-secret-key-change-in-prod')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     
     # Database Configuration (supports SQLite local & PostgreSQL remote)
     IS_VERCEL = os.environ.get('VERCEL') is not None
@@ -34,6 +35,17 @@ class Config:
         UPLOAD_FOLDER = os.path.join(BASE_DIR, os.environ.get('UPLOAD_FOLDER', 'uploads'))
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt'}
+    
+    # MIME type validation mapping
+    ALLOWED_MIME_TYPES = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'pdf': 'application/pdf',
+        'txt': 'text/plain',
+    }
     
     # Notification Settings
     WHATSAPP_ENABLED = os.environ.get('WHATSAPP_ENABLED', 'false').lower() in ['true', '1', 'yes']

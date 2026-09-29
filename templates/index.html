@@ -13,6 +13,7 @@
         </header>
 
         <form action="{{ url_for('submit_ticket') }}" method="POST" enctype="multipart/form-data" id="ticket-form" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <!-- Full Name Input -->
             <div class="form-group">
                 <label for="name" class="form-label" data-en="Full Name *" data-ar="الاسم بالكامل *">

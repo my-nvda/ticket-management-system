@@ -14,6 +14,7 @@
         </header>
 
         <form action="{{ url_for('admin_login') }}" method="POST" id="login-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="password" class="form-label" data-en="Admin Password *" data-ar="كلمة مرور المدير *">
                     Admin Password <span class="required-asterisk" aria-hidden="true">*</span>

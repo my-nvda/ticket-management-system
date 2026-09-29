@@ -7,6 +7,11 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
+from functools import wraps
+import time
+import hashlib
+import secrets as _secrets
+
 from config import Config
 from models import db, Ticket, generate_reference_number, init_db
 from notifications import send_ticket_notifications, send_status_update_notification
@@ -17,6 +22,26 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# ==================== RATE LIMITER ====================
+_login_attempts = {}  # {ip_hash: [(timestamp, ...), ...]}
+_RATE_LIMIT_MAX = 5
+_RATE_LIMIT_WINDOW = 900  # 15 minutes
+
+def _hash_ip(ip):
+    return hashlib.sha256((ip or '').encode()).hexdigest()[:16]
+
+def _is_rate_limited(ip):
+    h = _hash_ip(ip)
+    now = time.time()
+    attempts = _login_attempts.get(h, [])
+    attempts = [t for t in attempts if now - t < _RATE_LIMIT_WINDOW]
+    _login_attempts[h] = attempts
+    return len(attempts) >= _RATE_LIMIT_MAX
+
+def _record_attempt(ip):
+    h = _hash_ip(ip)
+    _login_attempts.setdefault(h, []).append(time.time())
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
@@ -52,6 +77,27 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+def validate_file_mime(file_storage):
+    """Validate file's actual MIME type matches its extension (magic-byte check)."""
+    if not file_storage or not file_storage.filename:
+        return False
+    ext = file_storage.filename.rsplit('.', 1)[1].lower() if '.' in file_storage.filename else ''
+    expected_mime = app.config.get('ALLOWED_MIME_TYPES', {}).get(ext)
+    if not expected_mime:
+        return False
+    header = file_storage.read(8192)
+    file_storage.seek(0)
+    magic_checks = {
+        'image/png': header[:8] == b'\x89PNG\r\n\x1a\n',
+        'image/jpeg': header[:3] == b'\xff\xd8\xff',
+        'image/gif': header[:6] in (b'GIF87a', b'GIF89a'),
+        'image/webp': header[:4] == b'RIFF' and header[8:12] == b'WEBP',
+        'application/pdf': header[:5] == b'%PDF-',
+    }
+    if expected_mime in magic_checks:
+        return magic_checks[expected_mime]
+    return True
+
 # Helper to check admin authentication status
 def is_admin_authenticated():
     if not app.config['ADMIN_AUTH_ENABLED']:
@@ -65,6 +111,23 @@ def inject_globals():
         'admin_auth_enabled': app.config['ADMIN_AUTH_ENABLED'],
         'is_admin': is_admin_authenticated()
     }
+
+# ==================== CSRF PROTECTION ====================
+
+@app.before_request
+def ensure_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = _secrets.token_hex(32)
+
+@app.context_processor
+def inject_csrf():
+    return {'csrf_token': session.get('_csrf_token', '')}
+
+def validate_csrf():
+    token = request.form.get('_csrf_token', '')
+    if not token or token != session.get('_csrf_token', ''):
+        from flask import abort
+        abort(403)
 
 # ==================== PUBLIC ROUTES ====================
 
@@ -114,6 +177,7 @@ def clean_phone_number(phone_raw):
 @app.route('/submit', methods=['POST'])
 def submit_ticket():
     """Process ticket submission."""
+    validate_csrf()
     name = request.form.get('name', '').strip()
     email = request.form.get('email', '').strip()
     phone_raw = request.form.get('phone', '').strip()
@@ -132,6 +196,9 @@ def submit_ticket():
         file = request.files['attachment']
         if file and file.filename != '':
             if allowed_file(file.filename):
+                if not validate_file_mime(file):
+                    flash('File content does not match its extension. Upload rejected for security.', 'error')
+                    return redirect(url_for('new_ticket'))
                 filename = secure_filename(file.filename)
                 unique_name = f"{generate_reference_number(6)}_{filename}"
                 save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
@@ -158,6 +225,7 @@ def submit_ticket():
     
     db.session.add(ticket)
     db.session.commit()
+    session['last_submitted_ref'] = ref_num
     logger.info(f"Created ticket {ref_num} for {name} ({email}, {phone})")
 
     # Dispatch notification (non-blocking errors)
@@ -212,19 +280,28 @@ def dashboard():
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login handler."""
+    """Admin login handler with brute-force protection."""
     if not app.config['ADMIN_AUTH_ENABLED']:
         return redirect(url_for('dashboard'))
-        
+    
     if request.method == 'POST':
+        validate_csrf()
+        client_ip = request.remote_addr
+        if _is_rate_limited(client_ip):
+            flash('Too many login attempts. Please try again in 15 minutes.', 'error')
+            return render_template('login.html'), 429
+        
         password = request.form.get('password', '')
         if password == app.config['ADMIN_PASSWORD']:
             session['admin_logged_in'] = True
+            h = _hash_ip(client_ip)
+            _login_attempts.pop(h, None)
             flash('Logged in successfully.', 'success')
             return redirect(url_for('dashboard'))
         else:
+            _record_attempt(client_ip)
             flash('Invalid admin password. Please try again.', 'error')
-            
+    
     return render_template('login.html')
 
 @app.route('/admin/logout')
@@ -248,6 +325,8 @@ def update_status(ticket_id):
     """Update ticket status and admin reply via AJAX or POST form."""
     if not is_admin_authenticated():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    validate_csrf()
         
     ticket = Ticket.query.get_or_404(ticket_id)
     new_status = request.form.get('status')
@@ -296,6 +375,8 @@ def delete_ticket(ticket_id):
     if not is_admin_authenticated():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
 
+    validate_csrf()
+
     ticket = Ticket.query.get_or_404(ticket_id)
     ref_num = ticket.reference_number
     
@@ -320,6 +401,8 @@ def delete_attachment(ticket_id):
     """Delete attachment file of a ticket without deleting the ticket."""
     if not is_admin_authenticated():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    validate_csrf()
 
     ticket = Ticket.query.get_or_404(ticket_id)
     
@@ -388,8 +471,27 @@ def test_whatsapp_endpoint():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    """Serve uploaded attachments securely."""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    """Serve uploaded attachments with IDOR protection."""
+    if is_admin_authenticated():
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+    ticket = Ticket.query.filter_by(attachment_filename=filename).first()
+    if not ticket:
+        from flask import abort
+        abort(404)
+    
+    referer = request.headers.get('Referer', '')
+    ref_num = ticket.reference_number
+    if ref_num and (f'/confirmation/{ref_num}' in referer or 
+                    f'/track/{ref_num}' in referer or
+                    f'/admin/ticket/' in referer):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+    if session.get('last_submitted_ref') == ref_num:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    
+    from flask import abort
+    abort(403)
 
 # ==================== ERROR HANDLERS ====================
 

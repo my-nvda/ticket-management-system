@@ -26,17 +26,17 @@
         <div class="header-container">
             <div class="logo-group">
                 <span class="logo-icon" aria-hidden="true">🎫</span>
-                <a href="{{ url_for('new_ticket') }}" class="app-title" data-en="Ticket System" data-ar="نظام التذاكر">Ticket System</a>
+                <a href="{{ url_for('new_ticket') }}" class="app-title" data-en="Ticket System" data-ar="نظام الشكاوى">Ticket System</a>
             </div>
 
             <!-- Navigation Bar -->
             <nav class="main-nav" aria-label="Main Navigation" data-en-aria="Main Navigation" data-ar-aria="القائمة الرئيسية">
                 <ul class="nav-list">
                     <li>
-                        <a href="{{ url_for('new_ticket') }}" class="nav-link" data-en="Submit Ticket" data-ar="تقديم تذكرة">Submit Ticket</a>
+                        <a href="{{ url_for('new_ticket') }}" class="nav-link" data-en="Submit Ticket" data-ar="تقديم شكوى">Submit Ticket</a>
                     </li>
                     <li>
-                        <a href="{{ url_for('track_ticket') }}" class="nav-link" data-en="Track Ticket" data-ar="متابعة تذكرة">Track Ticket</a>
+                        <a href="{{ url_for('track_ticket') }}" class="nav-link" data-en="Track Ticket" data-ar="متابعة شكوى">Track Ticket</a>
                     </li>
                     {% if is_admin %}
                     <li>
@@ -86,8 +86,8 @@
     <!-- App Footer -->
     <footer class="app-footer">
         <div class="container footer-container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <p data-en="© 2026 Ticket Management System. All rights reserved." data-ar="© 2026 نظام إدارة التذاكر. جميع الحقوق محفوظة.">
-                © 2026 Ticket Management System. All rights reserved.
+            <p data-en="© 2026 AWA Ticket Management System. All rights reserved." data-ar="© 2026 نظام إدارة التذاكر. جميع الحقوق محفوظة.">
+                © 2026 AWA Ticket Management System. All rights reserved.
             </p>
             <div class="footer-admin-link">
                 {% if is_admin %}

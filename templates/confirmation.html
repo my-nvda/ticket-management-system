@@ -4,7 +4,7 @@
 
 {% block content %}
 <section class="confirmation-section">
-    <div class="card confirmation-card text-center" role="region" aria-label="Ticket Submission Result" data-en-aria="Ticket Submission Result" data-ar-aria="نتيجة إرسال التذكرة">
+    <div class="card confirmation-card text-center" role="region" aria-label="Ticket Submission Result" data-en-aria="Ticket Submission Result" data-ar-aria="نتيجة إرسال الشكوى">
         <div class="success-badge" aria-hidden="true">
             <svg class="checkmark-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" width="64" height="64" aria-hidden="true">
                 <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
@@ -12,7 +12,7 @@
             </svg>
         </div>
 
-        <h1 class="page-title" data-en="Ticket Submitted Successfully!" data-ar="تم إرسال التذكرة بنجاح!">
+        <h1 class="page-title" data-en="Ticket Submitted Successfully!" data-ar="تم إرسال الشكوى بنجاح!">
             Ticket Submitted Successfully!
         </h1>
         
@@ -56,10 +56,10 @@
 
         <!-- Action Links -->
         <div class="confirmation-actions" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-            <a href="{{ url_for('track_ticket_view', ref=ticket.reference_number) }}" class="btn btn-primary btn-lg" data-en="🔍 Track Ticket Status" data-ar="🔍 متابعة حالة التذكرة">
+            <a href="{{ url_for('track_ticket_view', ref=ticket.reference_number) }}" class="btn btn-primary btn-lg" data-en="🔍 Track Ticket Status" data-ar="🔍 متابعة حالة الشكوى">
                 🔍 Track Ticket Status
             </a>
-            <a href="{{ url_for('new_ticket') }}" class="btn btn-outline btn-lg" data-en="➕ Submit Another Ticket" data-ar="➕ إرسال تذكرة أخرى">
+            <a href="{{ url_for('new_ticket') }}" class="btn btn-outline btn-lg" data-en="➕ Submit Another Ticket" data-ar="➕ إرسال شكوى أخرى">
                 ➕ Submit Another Ticket
             </a>
             {% if is_admin %}

@@ -22,10 +22,10 @@ def format_notification_text(ticket):
     if ticket.attachment_filename:
         attachment_str = f"{BASE_URL}/uploads/{ticket.attachment_filename}"
     else:
-        attachment_str = "No attachment / لا يوجد"
+        attachment_str = "No attachment / ما من مرفقات"
         
     return (
-        f"🎫 *New Ticket Submitted! / تذكرة جديدة*\n"
+        f"🎫 *New Ticket Submitted! / شكوى جديدة*\n"
         f"------------------------\n"
         f"📌 *Ref:* `{ticket.reference_number}`\n"
         f"👤 *Name:* {ticket.name}\n"
@@ -157,11 +157,11 @@ def send_submitter_whatsmeow_confirmation(ticket):
     track_url = f"{BASE_URL}/track/{ticket.reference_number}"
     text_content = (
         f"👋 *أهلاً {ticket.name}*\n"
-        f"تم استلام تذكرتك بنجاح برقم مرجعي: `{ticket.reference_number}`\n\n"
-        f"تذكرتك قيد المراجعة حالياً من قِبل فريق الدعم والإدارة.\n\n"
-        f"🔗 *رابط متابعة التذكرة والردود:* \n"
+        f"تم استلام مشكلتك بنجاح برقم مرجعي: `{ticket.reference_number}`\n\n"
+        f"مشكلتك قيد المراجعة حالياً من قِبل فريق دعم تكنولوجيا المعلومات.\n\n"
+        f"🔗 *رابط متابعة الشكوى والردود:* \n"
         f"{track_url}\n\n"
-        f"💡 *(ملاحظة: إذا كان الرابط غير أزرق، أضف الرقم لجهات اتصالك أو رد بأي رسالة لتفعيل الروابط).* "
+        f"💡 *(ملاحظة: إذا كنت لا تستطيع فتح الرابط قم بالرد بأي رسالة لتستطيع الضغط على الرابط).* "
     )
 
     url = f"{Config.WHATSMEOW_API_URL.rstrip('/')}/send-message"
@@ -241,7 +241,7 @@ def send_status_update_notification(ticket):
     track_url = f"{BASE_URL}/track/{ticket.reference_number}"
 
     update_text = (
-        f"🔔 *تحديث على تذكرتك (Ticket Update)*\n"
+        f"🔔 *تحديث على شكوتك (Ticket Update)*\n"
         f"------------------------\n"
         f"📌 *Ref:* `{ticket.reference_number}`\n"
         f"📊 *الحالة:* {status_labels.get(ticket.status, ticket.status)}\n"

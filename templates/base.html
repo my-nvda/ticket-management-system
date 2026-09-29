@@ -42,9 +42,11 @@
                     <li>
                         <a href="{{ url_for('dashboard') }}" class="nav-link" data-en="Dashboard" data-ar="لوحة التحكم">Dashboard</a>
                     </li>
+                    {% if admin_auth_enabled %}
                     <li>
                         <a href="{{ url_for('admin_logout') }}" class="nav-link nav-logout" data-en="Logout" data-ar="تسجيل الخروج">Logout</a>
                     </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
             </nav>

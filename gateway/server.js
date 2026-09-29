@@ -156,8 +156,6 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-const fs = require('fs');
-
 // QR Code Web Page Endpoint (Server-side rendering to Base64 Image)
 app.get('/qr', async (req, res) => {
     if (isConnected) {

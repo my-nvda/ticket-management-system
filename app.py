@@ -340,7 +340,8 @@ def admin_logout():
     """Admin logout handler."""
     session.pop('admin_logged_in', None)
     flash('Logged out successfully.', 'info')
-    return redirect(url_for('new_ticket'))
+    import random
+    return redirect(url_for('admin_login', _bust=random.randint(1, 999999)))
 
 @app.route('/admin/ticket/<int:ticket_id>')
 def ticket_detail(ticket_id):
